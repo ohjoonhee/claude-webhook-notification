@@ -167,13 +167,13 @@ classify() {
             echo "permission_waiting"
             ;;
         SubagentStop)
-            if [[ "${CLAUDE_NOTIFY_SUBAGENT:-false}" != "true" ]]; then exit 0; fi
+            if [[ "${CLAUDE_NOTIFY_SUBAGENT:-false}" != "true" ]]; then echo "suppress"; return; fi
             echo "subagent_complete"
             ;;
         Stop)
             # Detect subagent via transcript path
             if [[ "$TRANSCRIPT" == */subagents/* ]]; then
-                if [[ "${CLAUDE_NOTIFY_SUBAGENT:-false}" != "true" ]]; then exit 0; fi
+                if [[ "${CLAUDE_NOTIFY_SUBAGENT:-false}" != "true" ]]; then echo "suppress"; return; fi
                 echo "subagent_complete"
                 return
             fi
@@ -462,7 +462,7 @@ check_early_dedup || exit 0
 
 # Classification
 NOTIFY_TYPE=$(classify)
-[[ "$NOTIFY_TYPE" == "unknown" ]] && exit 0
+[[ -z "$NOTIFY_TYPE" || "$NOTIFY_TYPE" == "unknown" || "$NOTIFY_TYPE" == "suppress" ]] && exit 0
 
 # Question/permission cooldown (suppress if any notification was sent recently)
 if [[ "$NOTIFY_TYPE" == "question" || "$NOTIFY_TYPE" == "permission_waiting" ]]; then
@@ -478,7 +478,7 @@ check_content_dedup "${NOTIFY_TYPE}:${SUMMARY}" || exit 0
 # Extract task context (first user message)
 TASK=""
 if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
-    TASK=$(jq -rs '[.[] | select(.type=="user" or .message.role=="user") | .message.content | if type == "string" then . elif type == "array" then ([.[]? | select(.type=="text") | .text] | first) else null end] | map(select(. != null)) | first // empty' "$TRANSCRIPT" 2>/dev/null | tr '\n' ' ' | sed 's/  */ /g' | cut -c1-150)
+    TASK=$(jq -rs '[.[] | select(.type=="user" or .message.role=="user") | .message.content | if type == "string" then . elif type == "array" then ([.[]? | select(.type=="text") | .text] | first) else null end] | map(select(. != null)) | first // empty' "$TRANSCRIPT" 2>/dev/null | tr '\n' ' ' | sed 's/  */ /g' | cut -c1-150 || true)
 fi
 
 # Actions summary
