@@ -24,15 +24,30 @@ The installer:
 
 ## Notification Types
 
-| Slack Message | When | Color |
-|---|---|---|
-| **Task completed** | Claude finished writing/editing/running commands | Green |
-| **Waiting for answer** | Claude is asking you a question | Orange |
-| **Waiting for permission** | Claude needs tool approval (shows which tool) | Amber |
-| **Plan ready for review** | Claude finished a plan and wants approval | Purple |
-| **Session limit reached** | Session cost limit hit | Red |
-| **API error** | Authentication or rate limit error | Red |
-| **Subagent finished** | A spawned agent completed (disabled by default) | Gray |
+Each notification has a distinct emoji, color, and message so you can tell at a glance what Claude needs.
+
+| Type | Emoji | Color | Example Message |
+|---|---|---|---|
+| **Task completed** | :white_check_mark: | Green | *Created the login page and updated the router. All tests pass.* |
+| **Waiting for answer** | :question: | Orange | *Which database engine should I use: PostgreSQL or MySQL?* |
+| **Waiting for permission** | :raised_hand: | Amber | *Needs permission to run: Bash(npm run deploy --production)* |
+| **Plan ready for review** | :clipboard: | Purple | *Refactoring Plan: 1. Extract routes 2. Add middleware...* |
+| **Session limit reached** | :warning: | Red | *Session limit reached. Start a new session to continue.* |
+| **API error** | :x: | Red | *API error occurred. Check authentication or rate limits.* |
+| **Subagent finished** | :robot_face: | Gray | *Found 15 API endpoints in the codebase.* |
+
+Each notification also includes:
+- **Task** — your original prompt (truncated to 150 chars)
+- **Project** — the project directory name
+- **Actions** — tool usage summary (e.g., `2 new, 3 edits, 5 cmds — 1m 24s`)
+- **VSCode link** — click to open the project (supports local, SSH, WSL, and container remotes)
+
+### Smart Deduplication
+
+Notifications are deduplicated across three layers to avoid spam:
+- **2s lockout** — same hook firing multiple times rapidly
+- **180s content dedup** — identical messages from different code paths
+- **10s question cooldown** — suppresses question/permission notifications immediately after a task completion
 
 ## Configuration
 
