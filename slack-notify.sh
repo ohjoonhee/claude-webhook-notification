@@ -484,14 +484,14 @@ fi
 # Actions summary
 ACTIONS=$(generate_actions)
 
-# Format notification
-format_notification "$NOTIFY_TYPE"
-TITLE="${EMOJI} Claude Code — ${TYPE_TITLE}"
-
 # Build message body
 PROJECT_DIR=$(echo "$INPUT" | jq -r '.cwd // empty')
 PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 PROJECT_NAME=$(basename "$PROJECT_DIR")
+
+# Format notification
+format_notification "$NOTIFY_TYPE"
+TITLE="${EMOJI} ${PROJECT_NAME} — ${TYPE_TITLE}"
 VSCODE_LINK=$(build_vscode_link "$PROJECT_DIR")
 SCHEME="${CLAUDE_VSCODE_SCHEME:-vscode}"
 
